@@ -1,0 +1,51 @@
+%generate a random signal
+rng(1); %create seed for repeatability
+
+t = 0:.001:6.280; %initialize time vector
+T = length(t); %store length of time vector
+signal = sin(t); %signal vector
+noise = 0.1*rand(1,T); %noise vector
+noisy_signal = signal+noise; %combination of signal and noise
+
+
+L = 25; %half window length, full window length will be 2*L+1
+Wind = -L:1:L;%window vector
+window_size = length(t);%window size
+fwhm = 20;%define the full width at half maximum
+
+gaussian = exp(-4*log(2)*(Wind.^2)/(fwhm^2));%gaussian function
+gauss_sum = sum(gaussian);%sum of gaussian function for normalization
+gauss_norm = gaussian./gauss_sum;%normalized gaussian window
+
+
+%width at half maximum verification algorithm and visualization
+%{
+difference = zeros(window_size,1);
+for i=1:window_size
+    difference(i) = (0.5-gaussian(i))^2;
+end
+plot(t,gaussian);
+hold on
+plot(t,difference)
+minimum = min(difference);
+I = find(difference == minimum);
+true_fwhm = I(2)-I(1);
+%}
+
+
+%gauss_smoot vs mean smooth filter comparison
+gauss_smooth = zeros(1,T);
+for  i=1+L:T-L-1
+    gauss_smooth(i) = sum(gauss_norm.*noisy_signal(i-L:i+L));
+end
+i=1;
+mean_smooth = zeros(1,T);
+for i= i+L:T-L-1
+    mean_smooth(i) = mean(noisy_signal(i-L:i+L));
+end
+
+
+p = plot(t,noisy_signal,t,gauss_smooth,t,mean_smooth);%plot of both filters and noise for comparison 
+legend("Original Signal","Gaussian Smooth","Mean Smooth");
+ p(2).LineWidth = 2;
+ p(3).LineWidth = 2;
